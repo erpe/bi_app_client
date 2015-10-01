@@ -52,7 +52,7 @@ module BI
     # ::payload:: is actual data
     #
     def post(url, payload)
-      puts "post with args: #{payload}" 
+      payload = complete_payload(payload)
       http = Net::HTTP.new(url.host, url.port)
       req = Net::HTTP::Post.new(url.path)
       req.body = payload.to_json
@@ -63,6 +63,17 @@ module BI
       request['Authorization'] = "Token token=#{BI.configuration.api_key}"
       request['Content-Type'] = "application/json"
       request
+    end
+
+    # adds configured reporter id
+    # to payload
+    def complete_payload(hash)
+      %w{ uniq event}.each do |ep|
+        if hash.has_key?(ep)
+          hash[ep]['reporter_id'] = BI.configuration.reporter_id
+        end
+      end
+      hash
     end
   end
 
@@ -101,21 +112,37 @@ module BI
       %w{event referrer organisation revenue_cents category comment}
     end
 
+    def uniq_params
+      %w{ referrer uniq_url category }
+    end
+
     # cleans up args hash - only params present in 'event_params' 
     # will get through
     #
     def prepare_args(args, endpointkey)
+      raise "unknown endpoint: #{endpointkey}" unless endpointkey == 'event' || endpointkey == 'uniq'
       hash = { endpointkey => {} }
+
+      params = self.send("#{endpointkey}_params")
       args.each_pair do |key,value|
-        if event_params.include?(key.to_s)
-          hash['event'][key.to_s] = value
+        if params.include?(key.to_s)
+          hash[endpointkey][key.to_s] = value
         end
       end
-      unless hash['event'].keys.include?('category')
-        raise "missing key 'category'"
-      end
-      puts("prepared args: #{hash.inspect}")
+      check_post_hash(hash) 
       hash
+    end
+  
+    # checks if prepared arguemnts
+    # has a valid key - which corresponds to
+    # event and uniq in bi_app
+    #
+    def check_post_hash(hash)
+      if hash.has_key?('uniq') || hash.has_key?('event')
+        return true
+      else
+        raise "no valid endpoint in #{hash.inspect}"
+      end
     end
   end
 end
