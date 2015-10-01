@@ -2,6 +2,8 @@ require 'net/http'
 require 'json'
 
 module BI
+  API_VERSION = "1"
+
   class << self 
     attr_accessor :configuration
   end
@@ -20,8 +22,8 @@ module BI
 
     def initialize
       @api_version = 1
-      #@api_key = 0
-      @reporter_id = 0
+      @api_key = "0000"
+      @reporter_id = "0"
     end
 
   end
@@ -45,23 +47,22 @@ module BI
   module RequestBuilder
 
     private
+
+    # ::url:: is kind of URI 
+    # ::payload:: is actual data
+    #
     def post(url, payload)
       puts "post with args: #{payload}" 
       http = Net::HTTP.new(url.host, url.port)
       req = Net::HTTP::Post.new(url.path)
       req.body = payload.to_json
-      req['Authorization'] = "Token token=#{BI.configuration.api_key}"
-      req['Content-Type'] = "application/json"
-      res = http.request(req)
-      puts res.inspect
+      res = http.request(prepare_header(req))
     end
 
-    def json_header
-      {"Content-Type" => "application/json", "Accept" => "application/json" }
-    end
-
-    def auth_header
-      { "Authorization" => "Token", "token" => BI.configuration.api_key }
+    def prepare_header(request)
+      request['Authorization'] = "Token token=#{BI.configuration.api_key}"
+      request['Content-Type'] = "application/json"
+      request
     end
   end
 
@@ -83,37 +84,37 @@ module BI
     # optional keys: referrer|organisation|revenue|comment
     #
     def report_event(args)
-      puts args
-      _args = prepare_args(args)
-      post(events_url, args)
+      _args = prepare_args(args, 'event')
+      post(events_url, _args)
     end
 
     def report_uniq(args)
-      post_uniq(args)
+      _args = prepare_args(args, 'uniq')
+      post(uniqs_url, _args)
     end
 
     private
 
+    # only these params will get sent if present.
+    #
     def event_params
-      [ 
-        'referrer', 
-        'organisation', 
-        'revenue', 
-        'category',
-        'comment'
-      ]
+      %w{event referrer organisation revenue_cents category comment}
     end
 
-    def prepare_args(args)
-      hash = {'event' => {} }
+    # cleans up args hash - only params present in 'event_params' 
+    # will get through
+    #
+    def prepare_args(args, endpointkey)
+      hash = { endpointkey => {} }
       args.each_pair do |key,value|
-        if event_params.include?(key)
-          hash['event'][key] = value
+        if event_params.include?(key.to_s)
+          hash['event'][key.to_s] = value
         end
       end
       unless hash['event'].keys.include?('category')
-        raise "missing key category"
+        raise "missing key 'category'"
       end
+      puts("prepared args: #{hash.inspect}")
       hash
     end
   end
