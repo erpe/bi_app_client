@@ -1,7 +1,9 @@
 require 'net/http'
 require 'json'
 
-module BI
+module Bi
+  require 'bi/railtie' if defined?(Rails)
+
   API_VERSION = "1"
 
   class << self 
@@ -40,7 +42,7 @@ module BI
 
     private
     def api_uri
-      URI.parse("#{BI.configuration.bi_base_url}/v#{BI.configuration.api_version}/")
+      URI.parse("#{Bi.configuration.bi_base_url}/v#{Bi.configuration.api_version}/")
     end
   end
 
@@ -60,7 +62,7 @@ module BI
     end
 
     def prepare_header(request)
-      request['Authorization'] = "Token token=#{BI.configuration.api_key}"
+      request['Authorization'] = "Token token=#{Bi.configuration.api_key}"
       request['Content-Type'] = "application/json"
       request
     end
@@ -70,7 +72,7 @@ module BI
     def complete_payload(hash)
       %w{ uniq event}.each do |ep|
         if hash.has_key?(ep)
-          hash[ep]['reporter_id'] = BI.configuration.reporter_id
+          hash[ep]['reporter_id'] = Bi.configuration.reporter_id
         end
       end
       hash
@@ -86,7 +88,7 @@ module BI
     include RequestBuilder
 
     def initialize
-      unless BI.configuration.bi_base_url 
+      unless Bi.configuration.bi_base_url 
         raise "missing config attr 'bi_base_url'"
       end
     end
