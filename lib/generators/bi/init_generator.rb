@@ -14,6 +14,7 @@ module Bi
       def init_file_content
         cnt = <<-EOF
 Bi.configure do |config|
+  # config.disabled =  false                                  # default is false
   # config.bi_base_url =  'http://api.example.com/api'        # mandatory
   # config.api_version = 1                                    # default is 1
   # config.api_key = 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii'  # mandatory

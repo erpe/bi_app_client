@@ -20,12 +20,14 @@ module Bi
     attr_accessor :reporter_id
     attr_accessor :bi_base_url
     attr_accessor :api_version
+    attr_accessor :disabled
 
 
     def initialize
       @api_version = 1
       @api_key = "0000"
       @reporter_id = "0"
+      @disabled = false
     end
 
   end
@@ -54,6 +56,7 @@ module Bi
     # ::payload:: is actual data
     #
     def post(url, payload)
+      return true if Bi.configuration.disabled
       payload = complete_payload(payload)
       http = Net::HTTP.new(url.host, url.port)
       req = Net::HTTP::Post.new(url.path)
@@ -89,7 +92,7 @@ module Bi
 
     def initialize
       unless Bi.configuration.bi_base_url 
-        raise "missing config attr 'bi_base_url'"
+        raise "missing config attr 'bi_base_url'" unless Bi.configuration.disabled
       end
     end
 
