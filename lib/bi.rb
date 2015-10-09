@@ -56,12 +56,13 @@ module Bi
     # ::payload:: is actual data
     #
     def post(url, payload)
-      return true if Bi.configuration.disabled
+      return true if Bi.configuration.disabled == true
       payload = complete_payload(payload)
       http = Net::HTTP.new(url.host, url.port)
       req = Net::HTTP::Post.new(url.path)
       req.body = payload.to_json
       res = http.request(prepare_header(req))
+      res
     end
 
     def prepare_header(request)
