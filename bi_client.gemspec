@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'bi_client'
-  s.version     = '0.1.2'
+  s.version     = '0.1.3'
   s.date        = '2015-10-01'
   s.summary     = "a client for bi-app"
   s.description = "the client is used to report events/uniqs to bi-app"
